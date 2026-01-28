@@ -1,0 +1,1110 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AFSC 2026 - Vœux & Moments Champagne</title>
+    <!-- Utilisation de Tailwind CSS pour la mise en page rapide et responsive -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome pour les icônes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+
+    <style>
+        /* --- DESIGN SYSTEM & VARIABLES --- */
+        :root {
+            --bg-deep: #02040a;
+            --bg-night: #0a1128;
+            --accent-cyan: #00f2ff;
+            --accent-gold: #ffd700;
+            --glass-bg: rgba(10, 20, 40, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+
+        body {
+            margin: 0;
+            overflow: hidden; /* Empêche le scroll sur la vue principale */
+            background-color: var(--bg-deep);
+            color: #e0e6ed;
+            font-family: 'Inter', sans-serif;
+        }
+
+
+        /* --- BACKGROUND CANVAS --- */
+        #neural-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: auto;
+        }
+
+
+        /* --- UI ELEMENTS --- */
+        .glass-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            border-radius: 20px;
+        }
+
+
+        .btn-home {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-home:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.4);
+            border-color: rgba(0, 242, 255, 0.5);
+        }
+
+
+        /* --- BULLES (BUBBLES) --- */
+        #bubble-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            cursor: pointer;
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            text-align: center;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.1), rgba(0, 242, 255, 0.05) 60%, rgba(0, 242, 255, 0.2) 100%);
+            box-shadow: inset 0 0 20px rgba(0, 242, 255, 0.1), 0 0 10px rgba(0, 242, 255, 0.2);
+            border: 1px solid rgba(0, 242, 255, 0.3);
+            backdrop-filter: blur(2px);
+            transition: transform 0.3s ease, opacity 0.5s ease, filter 0.3s ease;
+            will-change: transform, top;
+            user-select: none;
+        }
+
+
+        /* Animation de flottement organique */
+        @keyframes floatVertical {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        @keyframes driftHorizontal {
+            0% { margin-left: 0px; }
+            50% { margin-left: 15px; }
+            100% { margin-left: 0px; }
+        }
+
+
+        .bubble-anim {
+            animation: floatVertical 6s ease-in-out infinite, driftHorizontal 8s ease-in-out infinite;
+        }
+
+
+        .bubble:hover {
+            transform: scale(1.1) !important;
+            box-shadow: 0 0 25px rgba(0, 242, 255, 0.6);
+            border-color: rgba(255, 255, 255, 0.8);
+            z-index: 100;
+        }
+
+
+        .bubble-content {
+            opacity: 0;
+            transform: scale(0.8);
+            transition: opacity 0.3s, transform 0.3s;
+            pointer-events: none;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            padding: 0 10px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+
+
+        .bubble:hover .bubble-content {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+
+        .bubble.seen {
+            opacity: 0.5;
+            border-color: rgba(255, 255, 255, 0.1);
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.05), rgba(100, 100, 100, 0.1));
+        }
+        .bubble.seen::after {
+            content: '\f00c';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: var(--bg-deep);
+            color: var(--accent-cyan);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--accent-cyan);
+        }
+
+
+        @keyframes popScale {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.4); opacity: 1; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+        .bubble.popping {
+            animation: popScale 0.4s forwards;
+            pointer-events: none;
+        }
+
+
+        /* --- MODAL --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 5, 15, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+
+        .modal-content {
+            transform: translateY(20px) scale(0.95);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            max-height: 90vh; /* Valeur par défaut CSS */
+            /* Suppression de overflow-y: auto ici car géré par Tailwind pour éviter les conflits */
+        }
+
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0) scale(1);
+        }
+
+
+        /* Typography */
+        .font-title { font-family: 'Playfair Display', serif; }
+        .font-tech { font-family: 'Orbitron', sans-serif; }
+
+
+        /* Utilities */
+        .hidden-view {
+            display: none !important;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .progress-bar-fill {
+            height: 100%;
+            background-color: var(--accent-cyan);
+            width: 0%;
+        }
+    </style>
+</head>
+<body class="text-slate-200">
+
+
+    <!-- 1. Background Neural Network (Commun à toutes les pages) -->
+    <canvas id="neural-canvas"></canvas>
+
+
+    <!-- ========================================= -->
+    <!-- VIEW: HOME (ACCUEIL)                      -->
+    <!-- ========================================= -->
+    <div id="home-view" class="absolute inset-0 z-30 flex flex-col items-center justify-center p-6">
+        
+        <!-- Bouton Son Accueil (Positionné en haut à droite) -->
+        <div class="absolute top-6 right-6 z-40">
+            <button onclick="app.toggleSound()" class="btn-sound-global glass-card px-4 py-2 hover:bg-white/10 transition flex items-center gap-2 text-sm text-slate-300 border-slate-500/30">
+                <i class="fa-solid fa-volume-xmark icon"></i> <span class="hidden md:inline">Ambiance</span>
+            </button>
+        </div>
+
+
+        <div class="text-center mb-8 animate-[fadeIn_1s_ease-out]">
+            <h1 class="font-title text-5xl md:text-7xl text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.6)] mb-4">
+                AFSC <span class="text-cyan-400 font-tech">2026</span>
+            </h1>
+            <p class="text-slate-300 text-lg md:text-xl font-light tracking-wide max-w-2xl mx-auto">
+                "Activer les Forces Synergiques d'une Communauté"
+            </p>
+        </div>
+
+
+        <div class="flex flex-col md:flex-row gap-6 w-full max-w-5xl animate-[fadeIn_1.5s_ease-out]">
+            
+            <!-- Colonne Portrait (Visible seulement sur desktop) -->
+            <div class="hidden md:flex w-1/3 flex-col glass-card p-2 bg-black/20 border-cyan-500/20 overflow-hidden relative group">
+                <!-- Image avec effet aura/brillance au survol -->
+                <img src="https://imgur.com/hXcYGqv.png" alt="Jean-Luc Berthier" class="w-full h-full object-cover object-top mix-blend-screen opacity-90 transition duration-700 group-hover:scale-105 group-hover:brightness-150 group-hover:drop-shadow-[0_0_15px_rgba(0,242,255,0.6)]">
+                <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/80 to-transparent p-4 text-center">
+                    <p class="font-title text-white text-lg">Jean-Luc Berthier</p>
+                    <p class="text-cyan-400 text-xs font-tech">Président AFSC</p>
+                </div>
+            </div>
+
+
+            <!-- Colonne Boutons -->
+            <div class="flex-1 flex flex-col gap-6">
+                
+                <!-- Bouton 1 : Vœux Adhérents -->
+                <button onclick="app.showVoeuxAdherents()" class="btn-home glass-card p-6 flex items-center gap-6 group hover:bg-white/10 text-left h-full">
+                    <div class="w-12 h-12 rounded-full bg-cyan-900/50 flex flex-shrink-0 items-center justify-center text-cyan-300 group-hover:scale-110 transition border border-cyan-500/30">
+                        <i class="fa-solid fa-users text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-title text-xl text-white">Vœux aux adhérents</h3>
+                        <p class="text-sm text-slate-400 mt-1">Par le Président Jean-Luc Berthier</p>
+                    </div>
+                    <i class="fa-solid fa-arrow-right ml-auto text-white/20 group-hover:text-cyan-400 transition"></i>
+                </button>
+
+
+                <!-- Bouton 2 : Vœux Équipe -->
+                <button onclick="app.showVoeuxEquipe()" class="btn-home glass-card p-6 flex items-center gap-6 group hover:bg-white/10 text-left h-full">
+                    <div class="w-12 h-12 rounded-full bg-indigo-900/50 flex flex-shrink-0 items-center justify-center text-indigo-300 group-hover:scale-110 transition border border-indigo-500/30">
+                        <i class="fa-solid fa-people-group text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-title text-xl text-white">Vœux à l'équipe</h3>
+                        <p class="text-sm text-slate-400 mt-1">Par le Président Jean-Luc Berthier</p>
+                    </div>
+                    <i class="fa-solid fa-arrow-right ml-auto text-white/20 group-hover:text-indigo-400 transition"></i>
+                </button>
+
+
+                <!-- Bouton 3 : Champagne (Pleine largeur relative) -->
+                <button onclick="app.enterChampagneMode()" class="btn-home glass-card p-6 flex items-center gap-6 group hover:bg-white/10 text-left border-t-4 border-t-amber-400/50 h-full">
+                    <div class="w-12 h-12 rounded-full bg-amber-900/30 flex flex-shrink-0 items-center justify-center text-amber-300 group-hover:scale-110 transition border border-amber-500/30">
+                        <i class="fa-solid fa-champagne-glasses text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-title text-xl text-amber-100">Moments Champagne</h3>
+                        <p class="text-sm text-slate-400 mt-1">Découvrir les pépites de l'année</p>
+                    </div>
+                    <i class="fa-solid fa-arrow-right ml-auto text-white/20 group-hover:text-amber-400 transition"></i>
+                </button>
+
+
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <!-- ========================================= -->
+    <!-- VIEW: APP (BULLES) - Hidden by default    -->
+    <!-- ========================================= -->
+    <div id="app-view" class="hidden-view fade-in absolute inset-0 w-full h-full">
+        
+        <!-- Interactive Layer -->
+        <div id="bubble-container"></div>
+
+
+        <!-- UI Overlay -->
+        <div class="ui-layer absolute top-0 left-0 w-full p-6 flex justify-between items-start">
+            <div class="ui-interactive">
+                <button onclick="app.goHome()" class="text-slate-400 hover:text-white transition flex items-center gap-2 mb-2 text-sm">
+                    <i class="fa-solid fa-arrow-left"></i> Accueil
+                </button>
+                <h1 class="font-title text-3xl md:text-5xl text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">
+                    Moments champagne <span class="text-cyan-400 text-sm font-tech align-middle tracking-widest ml-2 opacity-80">AFSC 2025</span>
+                </h1>
+            </div>
+
+
+            <!-- Boutons principaux -->
+            <div class="ui-interactive flex gap-3 relative z-[60]">
+                <!-- Bouton Son (Version App) -->
+                <button onclick="app.toggleSound()" class="btn-sound-global glass-card px-4 py-2 hover:bg-white/10 transition flex items-center gap-2 text-sm text-slate-300 border-slate-500/30">
+                    <i class="fa-solid fa-volume-xmark icon"></i> <span class="hidden md:inline">Ambiance</span>
+                </button>
+
+
+                <button onclick="app.togglePause()" id="btn-pause" class="glass-card px-4 py-2 hover:bg-white/10 transition hidden items-center gap-2 text-sm text-yellow-300 border-yellow-500/30 shadow-[0_0_15px_rgba(0,0,0,0.5)]">
+                    <i class="fa-solid fa-pause"></i> <span class="hidden md:inline">Pause</span>
+                </button>
+                <button onclick="app.toggleDiaporama()" id="btn-diaporama" class="glass-card px-4 py-2 hover:bg-white/10 transition flex items-center gap-2 text-sm shadow-[0_0_15px_rgba(0,0,0,0.5)]">
+                    <i class="fa-solid fa-play"></i> <span class="hidden md:inline">Diaporama</span>
+                </button>
+                <button onclick="app.openAddModal()" class="glass-card px-4 py-2 hover:bg-white/10 transition flex items-center gap-2 text-sm text-cyan-300 border-cyan-500/30">
+                    <i class="fa-solid fa-plus"></i> <span class="hidden md:inline">Ajouter</span>
+                </button>
+                <button onclick="app.toggleGallery()" class="glass-card w-10 h-10 flex items-center justify-center hover:bg-white/10 transition rounded-full">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ========================================= -->
+    <!-- SHARED MODALS                             -->
+    <!-- ========================================= -->
+
+
+    <!-- Modal Affichage Message -->
+    <div id="message-modal" class="modal-overlay">
+        <!-- Navigation Flèches (Visibles seulement si source = bubbles) -->
+        <button id="nav-prev" onclick="app.prevSlide()" class="hidden absolute left-4 top-1/2 transform -translate-y-1/2 z-[70] w-12 h-12 rounded-full bg-black/40 hover:bg-cyan-500/20 text-white/50 hover:text-white border border-white/10 transition flex items-center justify-center text-2xl group">
+            <i class="fa-solid fa-chevron-left group-hover:-translate-x-1 transition-transform"></i>
+        </button>
+        <button id="nav-next" onclick="app.nextSlide()" class="hidden absolute right-4 top-1/2 transform -translate-y-1/2 z-[70] w-12 h-12 rounded-full bg-black/40 hover:bg-cyan-500/20 text-white/50 hover:text-white border border-white/10 transition flex items-center justify-center text-2xl group">
+            <i class="fa-solid fa-chevron-right group-hover:translate-x-1 transition-transform"></i>
+        </button>
+
+
+        <!-- 
+             IMPORTANT: Modification ici.
+             - Retrait de 'overflow-hidden'
+             - Ajout de 'overflow-y-auto' pour le scroll
+             - Ajout de 'max-h-[85vh]' pour limiter la hauteur sur l'écran
+        -->
+        <div class="modal-content glass-card w-[90%] max-w-2xl p-0 relative overflow-y-auto bg-[#0a1128]/95 border-cyan-500/20 max-h-[85vh]">
+            <!-- Header Image -->
+            <div id="modal-image-container" class="w-full bg-black relative hidden group">
+                <img id="modal-image" src="" alt="Souvenir" class="w-full max-h-[50vh] object-contain mx-auto">
+            </div>
+            
+            <div class="p-8 relative">
+                <!-- Close Button -->
+                <button onclick="app.closeModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition text-white z-10">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+
+
+                <div class="flex items-center gap-4 mb-6">
+                    <div id="modal-avatar" class="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-500 to-blue-700 flex items-center justify-center text-xl font-bold font-title shadow-[0_0_15px_rgba(0,242,255,0.3)]">
+                        <!-- Initials -->
+                    </div>
+                    <div>
+                        <h2 id="modal-name" class="text-2xl font-title text-white">Nom</h2>
+                        <span id="modal-date" class="text-xs text-cyan-400 font-tech tracking-wider">DATE</span>
+                    </div>
+                </div>
+
+
+                <div class="relative mb-6">
+                    <i class="fa-solid fa-quote-left text-4xl text-white/5 absolute -top-4 -left-2"></i>
+                    <!-- Ajout whitespace-pre-wrap pour respecter les sauts de ligne des vœux -->
+                    <p id="modal-message" class="text-slate-300 leading-relaxed text-lg relative z-10 font-light whitespace-pre-wrap">
+                        Message ici...
+                    </p>
+                </div>
+
+
+                <div id="modal-link-container" class="mt-4 pt-4 border-t border-white/10 hidden">
+                    <a id="modal-link" href="#" target="_blank" class="inline-flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition text-sm font-semibold uppercase tracking-wide">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Voir le lien
+                    </a>
+                </div>
+
+
+                <!-- CONTROLES DIAPORAMA INTÉGRÉS -->
+                <div id="modal-slideshow-ui" class="mt-6 pt-4 border-t border-white/10 hidden flex-col gap-2">
+                    <div class="flex justify-between items-center">
+                         <span class="text-xs font-tech text-cyan-500/80 tracking-widest animate-pulse">MODE DIAPORAMA</span>
+                         <button onclick="app.togglePause()" id="modal-pause-btn" class="flex items-center gap-2 px-3 py-1 rounded bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white transition">
+                             <i class="fa-solid fa-pause"></i> <span>PAUSE</span>
+                         </button>
+                    </div>
+                    <!-- Barre de progression -->
+                    <div class="w-full h-1 bg-white/10 rounded overflow-hidden mt-1">
+                        <div id="slideshow-progress" class="progress-bar-fill"></div>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Modal Formulaire Ajout -->
+    <div id="add-modal" class="modal-overlay">
+        <div class="modal-content glass-card w-[90%] max-w-md p-8 bg-[#0a1128]">
+            <h2 class="text-2xl font-title mb-6 text-white border-b border-white/10 pb-4">Laisser une trace</h2>
+            <form id="entry-form" onsubmit="app.handleFormSubmit(event)">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-tech text-cyan-500 mb-1">VOTRE NOM</label>
+                        <input type="text" name="name" required class="w-full bg-white/5 border border-white/10 rounded p-3 text-white focus:outline-none focus:border-cyan-500 transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-tech text-cyan-500 mb-1">MESSAGE</label>
+                        <textarea name="message" rows="4" required class="w-full bg-white/5 border border-white/10 rounded p-3 text-white focus:outline-none focus:border-cyan-500 transition"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-tech text-slate-500 mb-1">URL IMAGE (Optionnel)</label>
+                        <input type="url" name="imageUrl" placeholder="https://..." class="w-full bg-white/5 border border-white/10 rounded p-3 text-slate-300 focus:outline-none focus:border-cyan-500 transition text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-tech text-slate-500 mb-1">LIEN EXTERNE (Optionnel)</label>
+                        <input type="url" name="linkUrl" placeholder="https://..." class="w-full bg-white/5 border border-white/10 rounded p-3 text-slate-300 focus:outline-none focus:border-cyan-500 transition text-sm">
+                    </div>
+                </div>
+                <div class="flex gap-3 mt-8">
+                    <button type="button" onclick="app.closeAddModal()" class="flex-1 py-3 rounded border border-white/20 hover:bg-white/5 transition text-sm">Annuler</button>
+                    <button type="submit" class="flex-1 py-3 rounded bg-cyan-600 hover:bg-cyan-500 text-white font-semibold shadow-[0_0_15px_rgba(6,182,212,0.5)] transition text-sm">Envoyer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Galerie / Liste Overlay -->
+    <div id="gallery-view" class="fixed inset-0 bg-[#02040a] z-40 transform translate-x-full transition-transform duration-500 flex flex-col">
+        <div class="p-6 border-b border-white/10 flex justify-between items-center bg-[#0a1128]">
+            <h2 class="text-2xl font-title text-white">Archives Neurales</h2>
+            <button onclick="app.toggleGallery()" class="text-white hover:text-cyan-400 transition text-xl">
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </div>
+        
+        <div class="p-4 flex flex-col md:flex-row gap-4 bg-[#050a14]">
+            <div class="relative flex-1">
+                <i class="fa-solid fa-search absolute left-3 top-3.5 text-slate-500"></i>
+                <input type="text" id="search-input" placeholder="Rechercher un nom..." oninput="app.filterGallery()" class="w-full bg-white/5 border border-white/10 rounded pl-10 pr-4 py-2.5 text-white focus:outline-none focus:border-cyan-500">
+            </div>
+            <div class="flex gap-2">
+                <button onclick="app.setFilter('all')" class="filter-btn active px-4 py-2 rounded text-xs font-tech border border-white/10 hover:bg-white/10 transition bg-cyan-900/30 text-cyan-300">TOUT</button>
+                <button onclick="app.setFilter('seen')" class="filter-btn px-4 py-2 rounded text-xs font-tech border border-white/10 hover:bg-white/10 transition text-slate-400">VUS</button>
+                <button onclick="app.setFilter('unseen')" class="filter-btn px-4 py-2 rounded text-xs font-tech border border-white/10 hover:bg-white/10 transition text-slate-400">NON VUS</button>
+            </div>
+            <button onclick="app.exportData()" class="px-4 py-2 rounded border border-white/10 hover:bg-white/10 text-xs font-tech text-emerald-400 flex items-center gap-2">
+                <i class="fa-solid fa-download"></i> EXPORT JSON
+            </button>
+        </div>
+
+
+        <div id="gallery-grid" class="flex-1 overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Items injectés par JS -->
+        </div>
+    </div>
+
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        
+        /* === MESSAGES OFFICIELS === */
+        const MSG_ADHERENTS = {
+            id: 'voeux-adh',
+            name: "Jean-Luc BERTHIER",
+            title: "Vœux aux adhérents", // Used manually in UI logic
+            message: "Bonjour à tous les adhérents d’AFSC\n\nEn ma qualité de président d’AFSC j’ai l’honneur et le plaisir de vous souhaiter de tout cœur une très belle année 2026, emplie de la réalisation de vos souhaits les plus chers. Et de garder très fort au fond de vous l’énergie et l’enthousiasme qui vous animent.\n\nAFSC grandit au fil des mois grâce à notre équipe (près de 120 collaborateurs directs) et au soutien des centaines d’adhérents qui la font vivre, imaginent, diffusent, expérimentent, rayonnent.\n\n2026 va être pour nous tous une très belle année de développement, et de production de belles ressources dans un esprit de bénévolat et de services rendus aux élèves et aux enseignants. Nous sommes innovants, déterminés à faire davantage encore. Continuons, c’est formidable !\n\nMerci sincère à vous tous.\n\nJean-Luc BERTHIER",
+            date: "13 janvier 2026",
+            bubbleStyle: { size: 0 } // dummy
+        };
+
+
+        const MSG_EQUIPE = {
+            id: 'voeux-team',
+            name: "Jean-Luc BERTHIER",
+            title: "Vœux à l'équipe",
+            message: "Chers amis de toute l’équipe AFSC,\n\nC’est de tout cœur que je souhaite à chacun une belle année 2026, pleine d’une sereine et enthousiaste philosophie de vie pour traverser les aléas et être porté par un élan fort vers tout ce qui est le plus sensible pour vous.\n\n2026, c’est un nouvel étage de la fusée AFSC qui va démarrer avec une puissante stratégie autour de la communication, de la dynamique des cogni’classes, d’un relooking des pistes pédagogiques, d’une extension significative en régions et tellement d’autres choses. Tout cela grâce à tous, grâce à vous. Pour cela je vous redis mes remerciements sincères et mes encouragements.\n\nBises à tous et rendez-vous tout au long de l’année.\n\nJean-Luc BERTHIER",
+            date: "13 janvier 2026",
+            bubbleStyle: { size: 0 } // dummy
+        };
+
+
+        const seedData = [
+            { id: "1", name: "LB", message: "Le mini-forum AFSC 2025 restera, pour moi, l'un des temps forts de l'année. Bien plus qu'un événement, il a été une incarnation très concrète de l'âme humaniste de l'association. J'y ai vu à l'œuvre une communauté naissante, engagée et solidaire, portée par une grande qualité d'écoute, attentive à l'humain autant qu'aux connaissances. Pour tout cela, ce mini-forum est mon vrai moment champagne. Merci à celles et ceux qui l'ont fait vivre et, au-delà, à toutes les personnes qui font exister AFSC au quotidien et en portent les valeurs. Que l'année 2026 nous donne une énergie immense pour poursuivre ce chemin ensemble.", imageUrl: "https://i.imgur.com/ydDlarN.png", bubbleStyle: { size: 100 } },
+            { id: "2", name: "Anonyme", message: "Une de mes petites élèves de 4 ans quand elle déborde d'énergie et perd le contrôle de ses gestes: « C'est pas moi, c'est mon cerveau ! »" },
+            { id: "3", name: "Jean-Luc", message: "Quelle formidable rencontre que le Mini'forum 25! Des visages souriants, curieux, avides pour chacun de se sentir l'un des mille bras du dieu Kannon des sciences cognitives. Quel bonheur ce souffle collectif, vers le désir de rendre chaque élève plus performant, plus confiant, plus citoyen. Dans ces précieux moments-là, on se sent pousser des ailes pour voler comme aucune autre organisation ne sait le faire. On continue de plus belle en 2026: intelligence, compétence, cordialité, tous ensemble!", bubbleStyle: { size: 110 } },
+            { id: "4", name: "Anonyme", message: "Beaucoup de jolis cogni'moments cette année 2025. Une conférence de Grégoire Borst, une autre d'André Tricot et de jolies phrases des élèves telles que \"avant, je croyais que mon cerveau faisait juste du bazar. En fait, il a des boutons... faut juste appuyer sur les bons\".", imageUrl: "https://i.imgur.com/NmzFQbN.png" },
+            { id: "5", name: "Anonyme", message: "Avec principalement Inés et Jean-Luc, j'ai eu la chance d'organiser et d'animer un stand AFSC au Salon de la Culture et des Jeux Mathématiques. On a donc pendant 2 jours accueilli en continu des groupes d'enfants qui buvaient nos paroles, et étaient fascinés par tout ce qu'ils pouvaient découvrir sur leur cerveau. Un vrai bonheur.", imageUrl: "https://imgur.com/afZ79WH.png" },
+            { id: "6", name: "Anonyme", message: "Donner une formation à tous les élèves de 6ème d'un collège sur le fonctionnement du cerveau, la mémorisation et d'entendre les professeurs principaux vouloir intégrer toutes ces notions et stratégies dans leur pratique. Voir la tête des enfants comprendre comment fonctionne leur cerveau qu'ils utilisent tout le temps." },
+            { id: "7", name: "Anonyme", message: "L'année 2025, aura été moins pétillante que 2024 (année où j'ai passé le DU). Mais je garde la positive attitude, alors le premier moment qui me vient, c'est la rencontre (en vrai), avec Jean-Luc et Juliette, et ma première intervention comme animatrice AFSC au salon de l'école pour tous (malgré un succès mitigé). Sinon, c'est tous ces petits moments avec mes élèves quand je leur parle du cerveau... et qu'ils en redemandent encore, parce que c'est « passionnant de savoir comment on fonctionne ». Étant plutôt année paire, j'espère avoir plein d'autres moments champagnes à partager car 2026 va être une année très riche." },
+            { id: "8", name: "Anonyme", message: "Une élève de 6e à la Réunion: (oui les élèves nous tutoient et toujours dans le respect) Moi: Pourquoi les cartes flash sont-elles utiles pour mémoriser plutôt que lire sa Leçon? L'élève: « car tu nous as dit que se questionner change les connexions neuronales »! Whaou" },
+            { id: "9", name: "Anonyme", message: "Le 16 décembre, organisation de la conférence en neurosciences avec Grégoire Borst. Beaucoup de stress et de préparatifs. Mais un moment important pour présenter les apports des neurosciences en éducation et présenter l'association aux collègues, inspecteurs, conseillers pédagogiques... Un moment important avec mon équipe pédagogique pour continuer d'avancer ensemble vers une meilleure compréhension du fonctionnement des élèves et une adaptation nécessaire.", imageUrl: "https://i.imgur.com/LL7zIk6.png" },
+            { id: "10", name: "Anonyme", message: "Je ne vais pas respecter la consigne car j'ai bien trop de moments champagne cette année ! De mon positionnement sur LinkedIn à mon intégration comme membre actif de l'association, j'ai vécu une année faire de dizaines de bulles de champagne. Des conférences par dizaines, près d'une centaine de journées de formation, la rencontre de personnes (et personnalités que j'admire!): Fred, Jean-Luc, Adeline, Bénédicte, Grégoire Borst, Mélanie Maximino Pinheiro et tant d'autres. Peut-être un coup de coeur pour la soirée passée à table avec JP Lachaux, Alexandra Volckaert et Anick Pelletier Bref, mon année 2025, ça a été une bouteille de champagne que l'on a vraiment secouée et ... i'm lovin' it!", bubbleStyle: { size: 120 } },
+            { id: "11", name: "Anonyme", message: "La conférence de Steve Masson lors du Cogni forum. Notamment la partie sur la surcharge cognitive. Très simple à saisir et vraiment pratique pour notre quotidien." },
+            { id: "12", name: "Equipe Franc-Comtoise", message: "Le moment Champagne pour notre petite équipe franc comtoise, ce sera certainement de nous retourner en arrière et de voir tout le chemin parcouru depuis mon premier contact avec Jean Luc en 2020: c'est le soutien de l'AFSC pour créer au sein de l'académie un parcours EAFC Sciences co, des FIL Sciences co, une journée régionale annuelle autour des sciences cog de l'apprentissage et la réalisation du projet \"Sciences cognitives avec et pour la société\". Voilà notre \"Champagne\" sur l'académie de Besançon." },
+            { id: "13", name: "Anonyme", message: "Participer à la préparation d'une formation de formateurs (CPC) d'une journée (trop court mais c'est déjà ça !) sur les fonctions cognitives transversales (et plus particulièrement en maternelle)." },
+            { id: "14", name: "Anonyme", message: "Lors d'une réunion de parents dans une petite école maternelle qui a lancé 2 cogni'classes, un papa a dit: \"Depuis que vous avez commencé ce projet, ma fille qui est en moyenne section, m'a appris des choses sur le fonctionnement du cerveau... c'est drôlement bien votre projet!\"" },
+            { id: "15", name: "Anonyme", message: "Nous travaillons cette année sur le thème de l'école et de la transmission. Dans un premier travail sur une journée de collège idéale, un élève a écrit: « Nous aurions des professeurs formés à la metacognition. »" },
+            { id: "16", name: "Anonyme", message: "Cuvée AFSC 2025: Un grand cru d'humanité et de science. Cette année a eu la saveur d'un Champagne d'exception. Elle fut d'abord pétillante. La rencontre en \"chair et en os\" de Jean-Luc Berthier et de vous tous lors du Miniforum a été l'effervescence nécessaire qui donne vie et énergie à nos projets. C'est aussi une année structurée par l'exigence avec l'intégration au DU de Neuroéducation, aux côtés de professionnels passionnés et passionnants tels que Anthony Godin, et le travail engagé au sein du groupe \"Pistes pédagogiques 2nd degré\" avec ma binôme de choc Frédérique Drappier. 2025 fut d'une immense générosité. Un millésime qui puise sa force dans le partage d'expérience: que ce soit lors de mes interventions, des formations entre collègues ou de ma nouvelle participation au Cogni'forum sous la supervision de Myriam Parouty. Quel plaisir de voir les neurosciences sortir des laboratoires et vibrer au cœur de nos salles de classes! Enfin, ce qui donne à ce millésime tout son équilibre et sa persistance, c'est le sourire et la fierté de mes élèves de SEGPA. Les voir retrouver le goût d'apprendre et savourer leur propre réussite est une belle note finale. Merci à tous d'avoir été les artisans de ce grand cru 2025. Santé à nos futurs projets !", imageUrl: "https://i.imgur.com/iU03GKC.png", bubbleStyle: { size: 140 } },
+            { id: "17", name: "Anonyme", message: "Une année intense et mon moment champagne c'est le miniforum! Voir autant de monde réunit dans un même but, avec une même énergie, c'était génial! Mille merci à tout l'investissement de chacune et chacun <3<3<3<3" },
+            { id: "18", name: "Anonyme", message: "2025, une année très riche! Un éclairage sur le passé qui me fait comprendre que les sciences cognitives ne sont pas une découverte mais que je les utilisais en classe, Un ancrage dans le présent avec ces personnes rencontrées et/ou écoutées lors de conférences (miniforum, réseaux sociaux, collègues) avec qui on peut échanger efficacement, toutes les lectures actuelles (articles scientifiques, revues, livres,..) qui alimentent ma réflexion, Et surtout une vision pour l avenir avec plusieurs projets en construction (expérimentation, formation, événements,....) Bref si il y a un moment où je peux croire que tout est possible c'est bien à partir cette année! Merci à l'AFSC et ses membres pour ce changement." },
+            { id: "19", name: "Anonyme", message: "Grâce à mon DU neuroeducation, pouvoir accéder à l'université des sciences alors que je suis enseignante de lettres, afin d'y intégrer, entre autres, les cours de neurobiologie et neuropsychotrauma" },
+            { id: "20", name: "Anonyme", message: "Mes moments champagne liés aux sciences cognitives pour cette année 2025 sont les retours de mes collègues. Plusieurs collègues de ma matière ayant suivi une de mes formations l'an dernier étaient contentes de me dire qu'elles avaient mis en place les fiches de mémorisation active. Une collègue de mon établissement m'a demandé de relancer cette année le fil de discussion pronote sur les sciences cognitives (je pensais que personne ne le lisait) et elle a lu tous les derniers livres que j'ai partagés sur ce fil et on en discute régulièrement." },
+            { id: "21", name: "Maria Elena", message: "Créer un Escape Game sur les sciences cognitives: un challenge réussi ! Le travail d'équipe entre profs - avec son lot de fous rires! L'installation des énigmes sur la plage - un cadre original et stimulant Les réactions enthousiastes des élèves - la plus belle des récompenses", imageUrl: "https://i.imgur.com/OuoCric.png" },
+            { id: "22", name: "Anonyme", message: "L'organisation d'une résidence pédagogique Cogni'classes avec 4 écoles de mon secteur: un temps de formation, d'échanges et de projets riches et stimulants" },
+            { id: "23", name: "Charlotte", message: "Quand Livio, 7 ans me dit: « attends 2 secondes, j'inhibe »" },
+            { id: "24", name: "Nathalie", message: "Revenir aux sources pour se ressourcer ce week-end de travail, de partage, de franche rigolade. 2) la naissance de mon petit fils Jules et le bonheur d'être mamily." },
+            { id: "25", name: "Anne", message: "Comme le dit une collègue ayant découvert le rôle de la gaine de myéline : \"Le gras, c'est cool!\"" },
+            { id: "26", name: "Anonyme", message: "Une collègue ayant suivi mes formations \"sciences co\" l'année dernière, a créé un podcast avec ses élèves sur leur ENT, pour former les parents!" },
+            { id: "27", name: "Juliette", message: "AFSC: Activer les Forces Synergiques d'une Communauté !!! Un feu d'artifice de moments champagne cette année, grâce à l'animation des réseaux locaux: que de si belles rencontres ! Ces neurones dessinés par des élèves de GS reflètent bien l'humeur des miens: joyeux, pétillants et colorés. Alors merci !" },
+            { id: "28", name: "Anonyme", message: "Une nouvelle Direction du Lycée qui s'implique dans les Sciences Co en organisant des formations pour Profs. Un début d'élan que je n'avais pas réussi à enclencher seul. Je suis ainsi devenu référent CPS, Conflits et EVARS rapidement. Merci à l'AFSC qui m'a permis de devenir légitime auprès de mes pairs. La métacognition élèves n'est plus trop loin" },
+            { id: "29", name: "Anonyme", message: "Le mini-forum avec de belles rencontres et des échanges très enrichissants: une impression de vivre le \"flow\" et un grand boost en fin d'année scolaire. Le plaisir de participer et contribuer à l'Afsc qui est un laboratoire d'innovations pédagogiques avec des enseignants passionnés et passionnants. L'étincelle dans les yeux de mes élèves à chaque fois que j'aborde le fonctionnement de leur cerveau, avec des discussions qui continuent sur la cour." },
+            { id: "30", name: "Anonyme", message: "Mes cogni'moments de l'année: 1/ les 10 jours d'une extrême richesse que représente le cogni'forum. 2/ le mini forum qui m'a permis de rencontrer de fabuleuses personnes et qui a encore donné plus de sens à mon investissement 3/ et plus largement mon engagement au sein de l'association à laquelle j'adhère depuis 4-5 ans qui donne chaque jour plus de sens à mon métier" },
+            { id: "31", name: "Anonyme", message: "- Les bons moments d'échange en petit groupe atelier lors du DU à la Sorbonne - apprendre la création d'une \"communauté apprenants\" basée sur les sc co dans mon collège après mon départ en retraite grâce à une jeune collègue hyper dynamique." },
+            { id: "32", name: "Fanny", message: "1) Le début de ma formation en science cognitive (DU) 2) Mes premiers pas dans l'asso 3) Partager avec les collègues" },
+            { id: "33", name: "Anonyme", message: "J'ai trois moments à partager: 1) la joie de vivre mon premier cogniforum 2) animer mes deux premiers temps de sensibilisation aux sciences cognitives: dans mon établissement: création d'un comité de pilotage sciences co et intervention dans un établissement de l'Indre 3) date calée en 2026 pour présentation de l'association aux chefs d'établissement de l'Indre dans le cadre de leurs journées de formation et d'échanges, juste après une intervention en visio de Grégoire Borst" }
+        ];
+
+
+        /* === SOUND GENERATOR (Brown Noise) === */
+        class SoundGenerator {
+            constructor() {
+                this.ctx = null;
+                this.gainNode = null;
+                this.isPlaying = false;
+                this.isInitialized = false;
+            }
+
+
+            init() {
+                if (this.isInitialized) return;
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContext();
+                
+                // Buffer de bruit brun (plus doux que le blanc)
+                const bufferSize = this.ctx.sampleRate * 2; // 2 sec loop
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                let lastOut = 0;
+                for (let i = 0; i < bufferSize; i++) {
+                    const white = Math.random() * 2 - 1;
+                    lastOut = (lastOut + (0.02 * white)) / 1.02;
+                    data[i] = lastOut * 3.5; // Gain compensation
+                    // Fade in/out edges to avoid clicking on loop
+                    if (i < 1000) data[i] *= (i/1000);
+                    if (i > bufferSize - 1000) data[i] *= ((bufferSize - i)/1000);
+                }
+
+
+                this.noiseSource = this.ctx.createBufferSource();
+                this.noiseSource.buffer = buffer;
+                this.noiseSource.loop = true;
+                
+                // Filtre passe-bas pour adoucir encore
+                this.filter = this.ctx.createBiquadFilter();
+                this.filter.type = 'lowpass';
+                this.filter.frequency.value = 400;
+
+
+                this.gainNode = this.ctx.createGain();
+                this.gainNode.gain.value = 0.05; // Volume très faible
+
+
+                this.noiseSource.connect(this.filter);
+                this.filter.connect(this.gainNode);
+                this.gainNode.connect(this.ctx.destination);
+                
+                this.noiseSource.start();
+                this.ctx.suspend();
+                this.isInitialized = true;
+            }
+
+
+            toggle() {
+                if (!this.isInitialized) this.init();
+
+
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                    this.isPlaying = true;
+                } else {
+                    this.ctx.suspend();
+                    this.isPlaying = false;
+                }
+                return this.isPlaying;
+            }
+        }
+
+
+        class NeuralBackground {
+            constructor() {
+                this.canvas = document.getElementById('neural-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.particles = [];
+                this.resize();
+                this.config = { particleCount: window.innerWidth < 768 ? 40 : 80, connectionDistance: 150, mouseDistance: 200, speed: 0.3 };
+                this.mouse = { x: null, y: null };
+                window.addEventListener('resize', () => this.resize());
+                window.addEventListener('mousemove', (e) => { this.mouse.x = e.x; this.mouse.y = e.y; });
+                this.initParticles();
+                this.animate();
+            }
+            resize() { this.canvas.width = window.innerWidth; this.canvas.height = window.innerHeight; }
+            initParticles() {
+                this.particles = [];
+                for (let i = 0; i < this.config.particleCount; i++) {
+                    this.particles.push({ x: Math.random() * this.canvas.width, y: Math.random() * this.canvas.height, vx: (Math.random() - 0.5) * this.config.speed, vy: (Math.random() - 0.5) * this.config.speed, size: Math.random() * 2 + 1 });
+                }
+            }
+            animate() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.particles.forEach((p, index) => {
+                    p.x += p.vx; p.y += p.vy;
+                    if (p.x < 0 || p.x > this.canvas.width) p.vx *= -1;
+                    if (p.y < 0 || p.y > this.canvas.height) p.vy *= -1;
+                    if (this.mouse.x != null) {
+                        let dx = this.mouse.x - p.x; let dy = this.mouse.y - p.y;
+                        let distance = Math.sqrt(dx*dx + dy*dy);
+                        if (distance < this.config.mouseDistance) {
+                            const force = (this.config.mouseDistance - distance) / this.config.mouseDistance;
+                            p.x -= (dx / distance) * force * 0.5; p.y -= (dy / distance) * force * 0.5;
+                        }
+                    }
+                    this.ctx.beginPath(); this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); this.ctx.fillStyle = 'rgba(0, 242, 255, 0.5)'; this.ctx.fill();
+                    for (let j = index; j < this.particles.length; j++) {
+                        const p2 = this.particles[j];
+                        const dx = p.x - p2.x; const dy = p.y - p2.y;
+                        const distance = Math.sqrt(dx*dx + dy*dy);
+                        if (distance < this.config.connectionDistance) {
+                            this.ctx.beginPath(); this.ctx.strokeStyle = `rgba(0, 242, 255, ${1 - distance/this.config.connectionDistance})`; this.ctx.lineWidth = 0.5; this.ctx.moveTo(p.x, p.y); this.ctx.lineTo(p2.x, p2.y); this.ctx.stroke();
+                        }
+                    }
+                });
+                requestAnimationFrame(() => this.animate());
+            }
+        }
+
+
+        class App {
+            constructor() {
+                this.data = [];
+                this.seenIds = new Set();
+                this.container = document.getElementById('bubble-container');
+                this.currentFilter = 'all';
+                this.animationFrameId = null;
+                this.diaporamaIndex = 0;
+                this.isPaused = false;
+                this.isSlideshowActive = false;
+                this.progressBarElement = document.getElementById('slideshow-progress');
+                this.slideDuration = 6000;
+                this.slideStartTime = 0;
+                this.pausedAt = 0;
+                this.currentModalIndex = -1;
+                this.soundGen = new SoundGenerator();
+                this.init();
+            }
+
+
+            init() {
+                this.loadData();
+                this.loadSeenStatus();
+                new NeuralBackground();
+                this.renderBubbles(); // Prepare them, but they are hidden by CSS structure initially
+                
+                document.getElementById('message-modal').addEventListener('click', (e) => {
+                    if (e.target.id === 'message-modal') this.closeModal();
+                });
+                
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        this.closeModal(); this.closeAddModal(); this.toggleGallery(false);
+                        if (this.isSlideshowActive) this.stopDiaporama();
+                    }
+                    if (document.getElementById('message-modal').classList.contains('active')) {
+                        if (e.key === 'ArrowRight') this.nextSlide();
+                        if (e.key === 'ArrowLeft') this.prevSlide();
+                    }
+                });
+            }
+
+
+            toggleSound() {
+                const isPlaying = this.soundGen.toggle();
+                this.updateSoundButtons(isPlaying);
+            }
+
+
+            updateSoundButtons(isPlaying) {
+                const btns = document.querySelectorAll('.btn-sound-global');
+                btns.forEach(btn => {
+                    const icon = btn.querySelector('.icon');
+                    if (isPlaying) {
+                        icon.className = 'fa-solid fa-volume-high icon';
+                        btn.classList.add('text-cyan-300', 'border-cyan-500/50', 'bg-cyan-900/20');
+                        btn.classList.remove('text-slate-300', 'border-slate-500/30');
+                    } else {
+                        icon.className = 'fa-solid fa-volume-xmark icon';
+                        btn.classList.remove('text-cyan-300', 'border-cyan-500/50', 'bg-cyan-900/20');
+                        btn.classList.add('text-slate-300', 'border-slate-500/30');
+                    }
+                });
+            }
+
+
+            /* --- HOME NAVIGATION --- */
+            showVoeuxAdherents() {
+                // Open the modal with special content
+                this.openMessage(MSG_ADHERENTS, null, true);
+            }
+
+
+            showVoeuxEquipe() {
+                this.openMessage(MSG_EQUIPE, null, true);
+            }
+
+
+            enterChampagneMode() {
+                document.getElementById('home-view').classList.add('hidden-view');
+                document.getElementById('app-view').classList.remove('hidden-view');
+                // Trigger reflow/animation if needed, handled by CSS
+            }
+
+
+            goHome() {
+                // Stop everything
+                if(this.isSlideshowActive) this.stopDiaporama();
+                this.toggleGallery(false);
+                this.closeAddModal();
+                this.closeModal();
+
+
+                document.getElementById('app-view').classList.add('hidden-view');
+                document.getElementById('home-view').classList.remove('hidden-view');
+            }
+
+
+            /* --- DATA LOADING --- */
+            loadData() {
+                const storedCustom = JSON.parse(localStorage.getItem('guestbook_custom_entries') || '[]');
+                this.data = [...storedCustom, ...seedData];
+            }
+            loadSeenStatus() {
+                const storedSeen = JSON.parse(localStorage.getItem('guestbook_seen_ids') || '[]');
+                this.seenIds = new Set(storedSeen);
+            }
+            markAsSeen(id) {
+                // Don't mark static messages (voeux) as seen in localstorage to avoid clutter
+                if (id === 'voeux-adh' || id === 'voeux-team') return;
+
+
+                this.seenIds.add(id);
+                localStorage.setItem('guestbook_seen_ids', JSON.stringify([...this.seenIds]));
+                const bubble = document.querySelector(`.bubble[data-id="${id}"]`);
+                if (bubble) bubble.classList.add('seen');
+            }
+
+
+            /* --- BUBBLES RENDER --- */
+            renderBubbles() {
+                this.container.innerHTML = '';
+                const width = window.innerWidth;
+                const height = window.innerHeight;
+                const count = this.data.length;
+                const cols = Math.ceil(Math.sqrt(count * (width / height)));
+                const rows = Math.ceil(count / cols);
+                const cellW = width / cols;
+                const cellH = height / rows;
+
+
+                this.data.forEach((item, index) => {
+                    const bubble = document.createElement('div');
+                    bubble.className = `bubble bubble-anim`;
+                    if (this.seenIds.has(item.id)) bubble.classList.add('seen');
+                    bubble.setAttribute('data-id', item.id);
+                    bubble.setAttribute('role', 'button');
+                    bubble.setAttribute('tabindex', '0');
+                    bubble.setAttribute('aria-label', `Message de ${item.name}`);
+
+
+                    const baseSize = Math.max(50, Math.min(100, (width * height) / (count * 200)));
+                    const size = item.bubbleStyle?.size || (Math.random() * (baseSize * 0.4) + baseSize * 0.8);
+                    bubble.style.width = `${size}px`;
+                    bubble.style.height = `${size}px`;
+
+
+                    let x, y;
+                    if (item.x !== undefined && item.y !== undefined) {
+                        x = (item.x / 100) * (width - size);
+                        y = (item.y / 100) * (height - size);
+                    } else {
+                        const col = index % cols;
+                        const row = Math.floor(index / cols);
+                        const offsetX = Math.random() * (cellW - size - 10) + 5;
+                        const offsetY = Math.random() * (cellH - size - 10) + 5;
+                        x = (col * cellW) + offsetX;
+                        y = (row * cellH) + offsetY;
+                    }
+                    bubble.style.left = `${x}px`;
+                    bubble.style.top = `${y}px`;
+                    bubble.style.animationDelay = `-${Math.random() * 5}s`;
+
+
+                    const content = document.createElement('div');
+                    content.className = 'bubble-content';
+                    content.innerText = item.name;
+                    bubble.appendChild(content);
+
+
+                    const openFn = () => this.openMessage(item, bubble);
+                    bubble.addEventListener('click', openFn);
+                    bubble.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openFn(); } });
+                    this.container.appendChild(bubble);
+                });
+            }
+
+
+            /* --- MODAL LOGIC --- */
+            openMessage(item, bubbleElement, isStaticMessage = false) {
+                // Determine current index for navigation
+                if (!isStaticMessage) {
+                    this.currentModalIndex = this.data.findIndex(d => d.id === item.id);
+                    // Show Nav arrows
+                    document.getElementById('nav-prev').classList.remove('hidden');
+                    document.getElementById('nav-next').classList.remove('hidden');
+                } else {
+                    this.currentModalIndex = -1;
+                    // Hide Nav arrows for static messages
+                    document.getElementById('nav-prev').classList.add('hidden');
+                    document.getElementById('nav-next').classList.add('hidden');
+                }
+
+
+                if (bubbleElement) {
+                    bubbleElement.classList.add('popping');
+                    setTimeout(() => { bubbleElement.classList.remove('popping'); this.markAsSeen(item.id); }, 400);
+                } else {
+                    this.markAsSeen(item.id);
+                }
+
+
+                const modal = document.getElementById('message-modal');
+                document.getElementById('modal-name').innerText = item.title ? item.title : item.name; // Use title if available (vœux)
+                document.getElementById('modal-message').innerText = item.message || "(Pas de message écrit)";
+                document.getElementById('modal-date').innerText = item.date || "MOMENT CHAMPAGNE 2025"; 
+                
+                document.getElementById('modal-avatar').innerText = item.name.charAt(0).toUpperCase();
+
+
+                const imgContainer = document.getElementById('modal-image-container');
+                const img = document.getElementById('modal-image');
+                if (item.imageUrl) {
+                    img.src = item.imageUrl;
+                    img.onerror = () => { imgContainer.classList.add('hidden'); };
+                    imgContainer.classList.remove('hidden');
+                } else {
+                    imgContainer.classList.add('hidden');
+                }
+
+
+                const linkContainer = document.getElementById('modal-link-container');
+                const link = document.getElementById('modal-link');
+                if (item.linkUrl) {
+                    link.href = item.linkUrl;
+                    linkContainer.classList.remove('hidden');
+                } else {
+                    linkContainer.classList.add('hidden');
+                }
+
+
+                // Controls Diaporama
+                const controls = document.getElementById('modal-slideshow-ui');
+                if (this.isSlideshowActive && !isStaticMessage) {
+                    controls.classList.remove('hidden'); controls.classList.add('flex');
+                    this.updateModalPauseButton();
+                } else {
+                    controls.classList.add('hidden'); controls.classList.remove('flex');
+                }
+
+
+                modal.classList.add('active');
+            }
+
+
+            closeModal() { document.getElementById('message-modal').classList.remove('active'); }
+
+
+            /* --- ADD MODAL --- */
+            openAddModal() { if(this.isSlideshowActive) this.stopDiaporama(); document.getElementById('add-modal').classList.add('active'); }
+            closeAddModal() { document.getElementById('add-modal').classList.remove('active'); document.getElementById('entry-form').reset(); }
+            handleFormSubmit(e) {
+                e.preventDefault();
+                const form = e.target;
+                const newEntry = {
+                    id: 'custom-' + Date.now(),
+                    name: form.name.value,
+                    message: form.message.value,
+                    imageUrl: form.imageUrl.value || null,
+                    linkUrl: form.linkUrl.value || null,
+                    date: new Date().toISOString()
+                };
+                const storedCustom = JSON.parse(localStorage.getItem('guestbook_custom_entries') || '[]');
+                storedCustom.push(newEntry);
+                localStorage.setItem('guestbook_custom_entries', JSON.stringify(storedCustom));
+                this.loadData();
+                this.renderBubbles();
+                this.closeAddModal();
+                alert("Message ajouté !");
+            }
+
+
+            /* --- GALLERY --- */
+            toggleGallery(forceState) {
+                if(this.isSlideshowActive) this.stopDiaporama();
+                const gallery = document.getElementById('gallery-view');
+                const isOpen = gallery.classList.contains('translate-x-0');
+                if (forceState === false || isOpen) {
+                    gallery.classList.remove('translate-x-0'); gallery.classList.add('translate-x-full');
+                } else {
+                    this.renderGalleryList();
+                    gallery.classList.remove('translate-x-full'); gallery.classList.add('translate-x-0');
+                }
+            }
+            setFilter(type) {
+                this.currentFilter = type;
+                document.querySelectorAll('.filter-btn').forEach(btn => { btn.classList.remove('bg-cyan-900/30', 'text-cyan-300'); btn.classList.add('text-slate-400'); });
+                event.target.classList.remove('text-slate-400'); event.target.classList.add('bg-cyan-900/30', 'text-cyan-300');
+                this.renderGalleryList();
+            }
+            filterGallery() { this.renderGalleryList(); }
+            renderGalleryList() {
+                const grid = document.getElementById('gallery-grid');
+                const search = document.getElementById('search-input').value.toLowerCase();
+                grid.innerHTML = '';
+                const filtered = this.data.filter(item => {
+                    if (!item.name.toLowerCase().includes(search)) return false;
+                    if (this.currentFilter === 'seen' && !this.seenIds.has(item.id)) return false;
+                    if (this.currentFilter === 'unseen' && this.seenIds.has(item.id)) return false;
+                    return true;
+                });
+                filtered.forEach(item => {
+                    const isSeen = this.seenIds.has(item.id);
+                    const card = document.createElement('div');
+                    card.className = `bg-white/5 border ${isSeen ? 'border-cyan-500/20' : 'border-white/10'} hover:border-cyan-500/50 p-4 rounded transition cursor-pointer flex gap-4 items-start`;
+                    card.onclick = () => { this.toggleGallery(false); this.openMessage(item, null); };
+                    const imgHTML = item.imageUrl ? `<img src="${item.imageUrl}" class="w-16 h-16 object-cover rounded bg-slate-800">` : `<div class="w-16 h-16 rounded bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center text-xl font-bold font-title text-white/20">${item.name.charAt(0)}</div>`;
+                    card.innerHTML = `${imgHTML}<div class="flex-1 min-w-0"><div class="flex justify-between items-start"><h3 class="font-title text-white truncate">${item.name}</h3>${isSeen ? '<i class="fa-solid fa-check text-cyan-500 text-xs"></i>' : '<div class="w-2 h-2 rounded-full bg-cyan-400 mt-1"></div>'}</div><p class="text-slate-400 text-sm line-clamp-2 mt-1 font-light">${item.message || "..."}</p></div>`;
+                    grid.appendChild(card);
+                });
+                if (filtered.length === 0) grid.innerHTML = '<div class="col-span-full text-center text-slate-500 mt-10">Aucun message trouvé.</div>';
+            }
+            exportData() {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.data, null, 2));
+                const downloadAnchorNode = document.createElement('a');
+                downloadAnchorNode.setAttribute("href", dataStr);
+                downloadAnchorNode.setAttribute("download", "livre_dor_export.json");
+                document.body.appendChild(downloadAnchorNode);
+                downloadAnchorNode.click();
+                downloadAnchorNode.remove();
+            }
+
+
+            /* --- DIAPORAMA & NAVIGATION --- */
+            toggleDiaporama() {
+                if (this.isSlideshowActive) { this.stopDiaporama(); } else { this.startDiaporama(); }
+            }
+            startDiaporama() {
+                this.toggleGallery(false); this.closeAddModal();
+                this.isSlideshowActive = true; this.diaporamaIndex = 0; this.isPaused = false;
+                const btnDia = document.getElementById('btn-diaporama');
+                btnDia.querySelector('i').className = 'fa-solid fa-stop'; btnDia.querySelector('span').innerText = 'Arrêter'; btnDia.classList.add('bg-red-500/20', 'border-red-500');
+                this.playNextSlide();
+            }
+            stopDiaporama() {
+                this.isSlideshowActive = false; this.isPaused = false; cancelAnimationFrame(this.animationFrameId);
+                const btnDia = document.getElementById('btn-diaporama');
+                btnDia.querySelector('i').className = 'fa-solid fa-play'; btnDia.querySelector('span').innerText = 'Diaporama'; btnDia.classList.remove('bg-red-500/20', 'border-red-500');
+                document.getElementById('modal-slideshow-ui').classList.add('hidden'); document.getElementById('modal-slideshow-ui').classList.remove('flex');
+            }
+            playNextSlide() {
+                if (!this.isSlideshowActive) return;
+                if (this.diaporamaIndex >= this.data.length) this.diaporamaIndex = 0;
+                this.openMessage(this.data[this.diaporamaIndex], null);
+                this.diaporamaIndex++;
+                this.slideStartTime = Date.now();
+                this.animateProgress();
+            }
+            nextSlide() {
+                if (this.isSlideshowActive) { this.playNextSlide(); } else {
+                    let nextIdx = this.currentModalIndex + 1;
+                    if (nextIdx >= this.data.length) nextIdx = 0;
+                    this.openMessage(this.data[nextIdx], null);
+                }
+            }
+            prevSlide() {
+                if (this.isSlideshowActive) {
+                    this.diaporamaIndex -= 2; 
+                    if (this.diaporamaIndex < 0) this.diaporamaIndex = this.data.length - 1;
+                    this.playNextSlide();
+                } else {
+                    let prevIdx = this.currentModalIndex - 1;
+                    if (prevIdx < 0) prevIdx = this.data.length - 1;
+                    this.openMessage(this.data[prevIdx], null);
+                }
+            }
+            animateProgress() {
+                if (!this.isSlideshowActive || this.isPaused) return;
+                const elapsed = Date.now() - this.slideStartTime;
+                const progress = Math.min((elapsed / this.slideDuration) * 100, 100);
+                this.progressBarElement.style.width = `${progress}%`;
+                if (elapsed >= this.slideDuration) { this.playNextSlide(); } else { this.animationFrameId = requestAnimationFrame(() => this.animateProgress()); }
+            }
+            togglePause() {
+                if (!this.isSlideshowActive) return;
+                this.isPaused = !this.isPaused;
+                this.updateModalPauseButton();
+                if (this.isPaused) {
+                    this.pausedAt = Date.now(); cancelAnimationFrame(this.animationFrameId);
+                } else {
+                    this.slideStartTime += (Date.now() - this.pausedAt); this.animateProgress();
+                }
+            }
+            updateModalPauseButton() {
+                const btn = document.getElementById('modal-pause-btn');
+                const icon = btn.querySelector('i');
+                const text = btn.querySelector('span');
+                if (this.isPaused) {
+                    icon.className = 'fa-solid fa-play'; text.innerText = 'REPRENDRE'; btn.classList.add('bg-yellow-500/20', 'text-yellow-300', 'border-yellow-500/50'); btn.classList.remove('bg-white/5', 'text-white', 'border-white/10');
+                } else {
+                    icon.className = 'fa-solid fa-pause'; text.innerText = 'PAUSE'; btn.classList.remove('bg-yellow-500/20', 'text-yellow-300', 'border-yellow-500/50'); btn.classList.add('bg-white/5', 'text-white', 'border-white/10');
+                }
+            }
+        }
+
+
+        window.addEventListener('load', () => { window.app = new App(); });
+    </script>
+</body>
+</html>
